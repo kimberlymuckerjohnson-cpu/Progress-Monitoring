@@ -1,0 +1,44 @@
+<% layout('layout', { active: 'students' }); %>
+
+<a href="/students" class="small">&larr; Back to Students</a>
+
+<h1><%= student.firstName %> <%= student.lastName %></h1>
+<p>Grade: <strong><%= student.gradeLevel %></strong></p>
+
+<div class="mt-2 mb-2">
+  <h3>Quick Actions</h3>
+  <div class="flex gap-1">
+    <a class="btn-primary" href="/assessments?tab=general&studentId=<%= student.id %>">New Assessment</a>
+    <a class="btn-secondary" href="/assessments?tab=fluency&studentId=<%= student.id %>">New Fluency Assessment</a>
+  </div>
+</div>
+
+<div class="mt-2">
+  <h3>Goals for this student</h3>
+  <a href="/goals?studentId=<%= student.id %>" class="small">Open in Goals</a>
+
+  <% if (goals.length === 0) { %>
+    <p>No goals yet. Add one from the Goals tab.</p>
+  <% } else { %>
+    <table class="mt-1">
+      <thead>
+        <tr>
+          <th>Area</th>
+          <th>Description</th>
+          <th>Grade Level</th>
+          <th>Mastery Criteria</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% goals.forEach(function(g) { %>
+          <tr>
+            <td><%= g.area %></td>
+            <td><%= g.description %></td>
+            <td><%= g.goalGradeLevel %></td>
+            <td><%= g.masteryCriteria %></td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  <% } %>
+</div>
