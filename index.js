@@ -14,18 +14,14 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public"))); // if you add CSS later
 
 // ----- In-memory data (no real DB yet) -----
+// Teachers can register themselves. Data is lost when the app restarts.
+let nextTeacherId = 1;
 let nextStudentId = 1;
 let nextGoalId = 1;
 let nextAssessmentId = 1;
 let nextFluencyId = 1;
 
-const teachers = [
-  {
-    id: 1,
-    email: "demo@school.org",
-    password: "password" // demo only, not secure!
-  }
-];
+const teachers = []; // { id, email, password }
 
 const students = [];
 const goals = [];
@@ -77,15 +73,72 @@ app.get("/", (req, res) => {
   res.redirect("/students");
 });
 
+// ----- Registration -----
+app.get("/register", (req, res) => {
+  res.render("register", {
+    error: null,
+    hideHeader: true,
+    active: null
+  });
+});
+
+app.post("/register", (req, res) => {
+  const { email, password, confirmPassword } = req.body;
+
+  if (!email || !password || !confirmPassword) {
+    return res.render("register", {
+      error: "Please fill in all fields.",
+      hideHeader: true,
+      active: null
+    });
+  }
+
+  if (password !== confirmPassword) {
+    return res.render("register", {
+      error: "Passwords do not match.",
+      hideHeader: true,
+      active: null
+    });
+  }
+
+  const existing = teachers.find(
+    (t) => t.email.toLowerCase() === email.toLowerCase()
+  );
+  if (existing) {
+    return res.render("register", {
+      error: "An account with this email already exists.",
+      hideHeader: true,
+      active: null
+    });
+  }
+
+  const newTeacher = {
+    id: nextTeacherId++,
+    email,
+    password // NOTE: plain text for now; NOT secure for production
+  };
+  teachers.push(newTeacher);
+
+  // Auto-log in after registration
+  loggedInTeacherId = newTeacher.id;
+  res.redirect("/students");
+});
+
 // ----- Login -----
 app.get("/login", (req, res) => {
-  res.render("login", { error: null, hideHeader: true, active: null });
+  res.render("login", {
+    error: null,
+    hideHeader: true,
+    active: null
+  });
 });
 
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
   const teacher = teachers.find(
-    (t) => t.email === email && t.password === password
+    (t) =>
+      t.email.toLowerCase() === (email || "").toLowerCase() &&
+      t.password === password
   );
   if (!teacher) {
     return res.render("login", {
@@ -578,7 +631,3 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Progress-Monitoring app listening on port ${PORT}`);
 });
-
-
- 
-  
