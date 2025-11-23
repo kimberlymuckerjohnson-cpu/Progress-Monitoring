@@ -1,0 +1,19 @@
+<% layout('layout', { hideHeader: true }); %>
+
+<h1>Progress-Monitoring</h1>
+<p class="small">Demo login — use <strong>demo@school.org</strong> / <strong>password</strong></p>
+
+<form method="post" action="/login" class="mt-2">
+  <div class="mb-1">
+    <label>Email</label><br />
+    <input type="email" name="email" required />
+  </div>
+  <div class="mb-1">
+    <label>Password</label><br />
+    <input type="password" name="password" required />
+  </div>
+  <button type="submit" class="btn-primary mt-1">Log In</button>
+  <% if (error) { %>
+    <div class="error"><%= error %></div>
+  <% } %>
+</form>
