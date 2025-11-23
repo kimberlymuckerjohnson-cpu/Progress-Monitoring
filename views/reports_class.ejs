@@ -1,0 +1,62 @@
+<% layout('layout', { active: 'reports' }); %>
+
+<h1>Class Overview</h1>
+
+<form method="get" action="/reports/class" class="mb-2 flex gap-2">
+  <div>
+    <label>Goal area</label><br />
+    <select name="area">
+      <option value="all" <%= selectedArea === 'all' ? 'selected' : '' %>>All</option>
+      <option value="reading" <%= selectedArea === 'reading' ? 'selected' : '' %>>Reading</option>
+      <option value="math" <%= selectedArea === 'math' ? 'selected' : '' %>>Math</option>
+      <option value="writing" <%= selectedArea === 'writing' ? 'selected' : '' %>>Writing</option>
+      <option value="behavior" <%= selectedArea === 'behavior' ? 'selected' : '' %>>Behavior</option>
+      <option value="other" <%= selectedArea === 'other' ? 'selected' : '' %>>Other</option>
+    </select>
+  </div>
+  <div>
+    <label>Grade</label><br />
+    <select name="grade">
+      <option value="all" <%= selectedGrade === 'all' ? 'selected' : '' %>>All</option>
+      <% grades.forEach(function(g) { %>
+        <option value="<%= g %>" <%= selectedGrade === g ? 'selected' : '' %>><%= g %></option>
+      <% }); %>
+    </select>
+  </div>
+  <div style="align-self:flex-end;">
+    <button type="submit" class="btn-secondary">Apply Filters</button>
+  </div>
+</form>
+
+<% if (rows.length === 0) { %>
+  <p>No students match your filters.</p>
+<% } else { %>
+  <table>
+    <thead>
+      <tr>
+        <th>Student</th>
+        <th>Goal Area</th>
+        <th>Short Goal Description</th>
+        <th>Latest % Correct</th>
+        <th>Latest Fluency WCPM</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% rows.forEach(function(r) { %>
+        <tr>
+          <td>
+            <a href="/reports/student?studentId=<%= r.studentId %>">
+              <%= r.studentName %>
+            </a>
+          </td>
+          <td><%= r.goalArea %></td>
+          <td><%= r.shortGoalDescription %></td>
+          <td><%= r.latestPercentCorrect == null ? 'No Data' : r.latestPercentCorrect.toFixed(1) + '%' %></td>
+          <td><%= r.latestFluencyWcpm == null ? '—' : r.latestFluencyWcpm %></td>
+          <td><%= r.status %></td>
+        </tr>
+      <% }); %>
+    </tbody>
+  </table>
+<% } %>
