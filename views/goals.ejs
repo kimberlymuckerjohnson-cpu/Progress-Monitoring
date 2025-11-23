@@ -1,0 +1,107 @@
+<% layout('layout', { active: 'goals' }); %>
+
+<div class="flex space-between mb-2">
+  <h1>Goals</h1>
+</div>
+
+<form method="get" action="/goals" class="mb-2 flex gap-2">
+  <div>
+    <label>Student</label><br />
+    <select name="studentId">
+      <option value="">All students</option>
+      <% students.forEach(function(s) { %>
+        <option value="<%= s.id %>" <%= selectedStudentId == s.id ? 'selected' : '' %>>
+          <%= s.firstName %> <%= s.lastName %>
+        </option>
+      <% }); %>
+    </select>
+  </div>
+  <div>
+    <label>Goal area</label><br />
+    <select name="area">
+      <option value="all" <%= selectedArea === 'all' ? 'selected' : '' %>>All</option>
+      <option value="reading" <%= selectedArea === 'reading' ? 'selected' : '' %>>Reading</option>
+      <option value="math" <%= selectedArea === 'math' ? 'selected' : '' %>>Math</option>
+      <option value="writing" <%= selectedArea === 'writing' ? 'selected' : '' %>>Writing</option>
+      <option value="behavior" <%= selectedArea === 'behavior' ? 'selected' : '' %>>Behavior</option>
+      <option value="other" <%= selectedArea === 'other' ? 'selected' : '' %>>Other</option>
+    </select>
+  </div>
+  <div style="align-self:flex-end;">
+    <button type="submit" class="btn-secondary">Apply Filters</button>
+  </div>
+</form>
+
+<form method="post" action="/goals/add" class="mb-2">
+  <h3>Add Goal</h3>
+  <div class="flex gap-2">
+    <div style="flex:1">
+      <label>Student</label><br />
+      <select name="studentId" required>
+        <option value="">Select student</option>
+        <% students.forEach(function(s) { %>
+          <option value="<%= s.id %>"><%= s.firstName %> <%= s.lastName %></option>
+        <% }); %>
+      </select>
+    </div>
+    <div style="flex:1">
+      <label>Area</label><br />
+      <select name="area" required>
+        <option value="">Select area</option>
+        <option value="reading">Reading</option>
+        <option value="math">Math</option>
+        <option value="writing">Writing</option>
+        <option value="behavior">Behavior</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
+  </div>
+  <div class="mt-1">
+    <label>Description</label><br />
+    <textarea name="description" required></textarea>
+  </div>
+  <div class="flex gap-2 mt-1">
+    <div style="flex:1">
+      <label>Goal Grade Level</label><br />
+      <input type="text" name="goalGradeLevel" required />
+    </div>
+    <div style="flex:1">
+      <label>Mastery Criteria</label><br />
+      <input type="text" name="masteryCriteria" required />
+    </div>
+  </div>
+  <button type="submit" class="btn-primary mt-1">Save Goal</button>
+</form>
+
+<% if (goals.length === 0) { %>
+  <p>No goals match your filters.</p>
+<% } else { %>
+  <table>
+    <thead>
+      <tr>
+        <th>Student</th>
+        <th>Area</th>
+        <th>Description</th>
+        <th>Grade Level</th>
+        <th>Mastery Criteria</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% goals.forEach(function(g) { %>
+        <tr>
+          <td><%= g.studentName %></td>
+          <td><%= g.area %></td>
+          <td><%= g.description.length > 80 ? g.description.slice(0,77) + '...' : g.description %></td>
+          <td><%= g.goalGradeLevel %></td>
+          <td><%= g.masteryCriteria %></td>
+          <td>
+            <form method="post" action="/goals/<%= g.id %>/delete" onsubmit="return confirm('Delete this goal and its assessment history?');">
+              <button type="submit" class="btn-danger">Delete</button>
+            </form>
+          </td>
+        </tr>
+      <% }); %>
+    </tbody>
+  </table>
+<% } %>
