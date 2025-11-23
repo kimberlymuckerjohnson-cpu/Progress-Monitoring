@@ -1,0 +1,29 @@
+<h1>Create Your Account</h1>
+
+<p class="small">
+  Enter your school email and choose a password.
+</p>
+
+<form method="post" action="/register" class="mt-2">
+  <div class="mb-1">
+    <label>Email</label><br />
+    <input type="email" name="email" required />
+  </div>
+  <div class="mb-1">
+    <label>Password</label><br />
+    <input type="password" name="password" required />
+  </div>
+  <div class="mb-1">
+    <label>Confirm Password</label><br />
+    <input type="password" name="confirmPassword" required />
+  </div>
+  <button type="submit" class="btn-primary mt-1">Create Account</button>
+  <% if (error) { %>
+    <div class="error"><%= error %></div>
+  <% } %>
+</form>
+
+<p class="small mt-2">
+  Already have an account?
+  <a href="/login">Log in here.</a>
+</p>
