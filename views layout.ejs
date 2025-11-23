@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Progress-Monitoring</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      body {
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        margin: 0;
+        background: #f5f5f5;
+      }
+      header {
+        background: #1f2937;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      header .left {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+      }
+      header nav a {
+        color: #e5e7eb;
+        text-decoration: none;
+        margin-right: 1rem;
+        font-size: 0.95rem;
+      }
+      header nav a.active {
+        color: #ffffff;
+        font-weight: 600;
+        border-bottom: 2px solid #3b82f6;
+      }
+      main {
+        max-width: 960px;
+        margin: 1.5rem auto;
+        padding: 1.5rem;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+      }
+      h1 {
+        margin-top: 0;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th, td {
+        padding: 0.5rem;
+        border-bottom: 1px solid #e5e7eb;
+        text-align: left;
+        font-size: 0.9rem;
+      }
+      th {
+        background: #f9fafb;
+      }
+      form {
+        margin: 0;
+      }
+      input, select, textarea, button {
+        font-family: inherit;
+        font-size: 0.95rem;
+      }
+      input[type="text"],
+      input[type="email"],
+      input[type="password"],
+      input[type="number"],
+      input[type="date"],
+      select,
+      textarea {
+        padding: 0.4rem 0.5rem;
+        border-radius: 6px;
+        border: 1px solid #d1d5db;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      textarea {
+        min-height: 80px;
+      }
+      .btn-primary {
+        background: #3b82f6;
+        color: white;
+        border: none;
+        padding: 0.45rem 0.9rem;
+        border-radius: 999px;
+        cursor: pointer;
+      }
+      .btn-secondary {
+        background: #e5e7eb;
+        color: #111827;
+        border: none;
+        padding: 0.45rem 0.9rem;
+        border-radius: 999px;
+        cursor: pointer;
+      }
+      .btn-danger {
+        background: #ef4444;
+        color: white;
+        border: none;
+        padding: 0.35rem 0.7rem;
+        border-radius: 999px;
+        cursor: pointer;
+        font-size: 0.8rem;
+      }
+      .flex {
+        display: flex;
+      }
+      .space-between {
+        justify-content: space-between;
+      }
+      .gap-1 {
+        gap: 0.5rem;
+      }
+      .gap-2 {
+        gap: 1rem;
+      }
+      .mt-1 {
+        margin-top: 0.5rem;
+      }
+      .mt-2 {
+        margin-top: 1rem;
+      }
+      .mb-1 {
+        margin-bottom: 0.5rem;
+      }
+      .mb-2 {
+        margin-bottom: 1rem;
+      }
+      .tag {
+        display: inline-block;
+        padding: 0.1rem 0.4rem;
+        background: #eff6ff;
+        color: #1d4ed8;
+        border-radius: 999px;
+        font-size: 0.75rem;
+      }
+      .small {
+        font-size: 0.8rem;
+        color: #6b7280;
+      }
+      .error {
+        color: #b91c1c;
+        margin-top: 0.5rem;
+      }
+
+      @media (max-width: 640px) {
+        main {
+          margin: 0.75rem;
+          padding: 1rem;
+        }
+        header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 0.5rem;
+        }
+        header nav {
+          display: flex;
+          flex-wrap: wrap;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <% if (typeof hideHeader === "undefined" || !hideHeader) { %>
+      <header>
+        <div class="left">
+          <div><strong>Progress-Monitoring</strong></div>
+          <nav>
+            <a href="/students" class="<%= active === 'students' ? 'active' : '' %>">Students</a>
+            <a href="/goals" class="<%= active === 'goals' ? 'active' : '' %>">Goals</a>
+            <a href="/assessments" class="<%= active === 'assessments' ? 'active' : '' %>">Assessments</a>
+            <a href="/reports" class="<%= active === 'reports' ? 'active' : '' %>">Reports</a>
+          </nav>
+        </div>
+        <div>
+          <form method="post" action="/logout">
+            <button type="submit" class="btn-secondary">Logout</button>
+          </form>
+        </div>
+      </header>
+    <% } %>
+
+    <main>
+      <%- body %>
+    </main>
+  </body>
+</html>
