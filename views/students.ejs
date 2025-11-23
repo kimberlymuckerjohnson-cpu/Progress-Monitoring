@@ -1,8 +1,5 @@
-<% layout('layout', { active: 'students' }); %>
 
-<div class="flex space-between mb-2">
-  <h1>Students</h1>
-</div>
+         <h1>Students</h1>
 
 <form method="post" action="/students/add" class="mb-2">
   <h3>Add Student</h3>
@@ -23,7 +20,7 @@
   <button type="submit" class="btn-primary mt-1">Save Student</button>
 </form>
 
-<% if (students.length === 0) { %>
+<% if (!students || students.length === 0) { %>
   <p>You don’t have any students yet. Add your first student to start tracking goals and assessments.</p>
 <% } else { %>
   <table>
@@ -39,7 +36,11 @@
     <tbody>
       <% students.forEach(function(s) { %>
         <tr>
-          <td><a href="/students/<%= s.id %>"><%= s.firstName %> <%= s.lastName %></a></td>
+          <td>
+            <a href="/students/<%= s.id %>">
+              <%= s.firstName %> <%= s.lastName %>
+            </a>
+          </td>
           <td><%= s.gradeLevel %></td>
           <td><%= s.goalCount %></td>
           <td><%= s.lastAssessmentDate || 'No Data' %></td>
