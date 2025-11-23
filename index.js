@@ -1,12 +1,15 @@
 const express = require("express");
 const path = require("path");
+const layouts = require("express-ejs-layouts");
 
 const app = express();
 
 // ----- Basic setup -----
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
+app.set("layout", "layout"); // use views/layout.ejs as the default layout
 
+app.use(layouts);
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public"))); // if you add CSS later
 
@@ -76,7 +79,7 @@ app.get("/", (req, res) => {
 
 // ----- Login -----
 app.get("/login", (req, res) => {
-  res.render("login", { error: null });
+  res.render("login", { error: null, hideHeader: true, active: null });
 });
 
 app.post("/login", (req, res) => {
@@ -85,7 +88,11 @@ app.post("/login", (req, res) => {
     (t) => t.email === email && t.password === password
   );
   if (!teacher) {
-    return res.render("login", { error: "Incorrect email or password." });
+    return res.render("login", {
+      error: "Incorrect email or password.",
+      hideHeader: true,
+      active: null
+    });
   }
   loggedInTeacherId = teacher.id;
   res.redirect("/students");
@@ -108,13 +115,12 @@ app.get("/students", requireLogin, (req, res) => {
     };
   });
 
-  res.render("students", { students: teacherStudents });
+  res.render("students", { students: teacherStudents, active: "students" });
 });
 
 app.post("/students/add", requireLogin, (req, res) => {
   const { firstName, lastName, gradeLevel } = req.body;
   if (!firstName || !lastName || !gradeLevel) {
-    // Simple handling, redirect back
     return res.redirect("/students");
   }
   students.push({
@@ -133,7 +139,6 @@ app.post("/students/:id/delete", requireLogin, (req, res) => {
     (s) => s.id === id && s.teacherId === loggedInTeacherId
   );
   if (index !== -1) {
-    // Remove associated goals and assessments too (simple cascade)
     const studentId = students[index].id;
     for (let i = goals.length - 1; i >= 0; i--) {
       if (goals[i].studentId === studentId) {
@@ -162,7 +167,11 @@ app.get("/students/:id", requireLogin, (req, res) => {
     return res.redirect("/students");
   }
   const studentGoals = goals.filter((g) => g.studentId === id);
-  res.render("student_detail", { student, goals: studentGoals });
+  res.render("student_detail", {
+    student,
+    goals: studentGoals,
+    active: "students"
+  });
 });
 
 // ----- Goals -----
@@ -194,7 +203,8 @@ app.get("/goals", requireLogin, (req, res) => {
     students: teacherStudents,
     goals: goalsWithStudent,
     selectedStudentId: studentId || "",
-    selectedArea: area || "all"
+    selectedArea: area || "all",
+    active: "goals"
   });
 });
 
@@ -241,10 +251,11 @@ app.get("/assessments", requireLogin, (req, res) => {
     students: teacherStudents,
     selectedStudentId,
     studentGoals,
-    generatedItems: [], // none yet
+    generatedItems: [],
     generalSummary: null,
     fluencyData: null,
-    message: null
+    message: null,
+    active: "assessments"
   });
 });
 
@@ -267,14 +278,13 @@ app.post("/assessments/general/generate", requireLogin, (req, res) => {
 
   const generatedItems = [];
   selectedGoals.forEach((g) => {
-    // Simple dummy items
     generatedItems.push({
       goalId: g.id,
       goalArea: g.area,
       goalDescription: g.description,
       prompt: `Sample item for goal "${g.description}"`,
       correctAnswer: "Teacher-defined correct answer",
-      score: "incorrect" // default
+      score: "incorrect"
     });
   });
 
@@ -291,7 +301,8 @@ app.post("/assessments/general/generate", requireLogin, (req, res) => {
     generatedItems,
     generalSummary: null,
     fluencyData: null,
-    message: null
+    message: null,
+    active: "assessments"
   });
 });
 
@@ -303,10 +314,8 @@ app.post("/assessments/general/save", requireLogin, (req, res) => {
     return res.redirect("/assessments?tab=general");
   }
 
-  // Scores come in as items[index][field]
   const items = [];
   const body = req.body;
-  // We encoded fields as arrays: goalId[], prompt[], correctAnswer[], score[]
   const goalIds = Array.isArray(body.goalId) ? body.goalId : [body.goalId];
   const prompts = Array.isArray(body.prompt) ? body.prompt : [body.prompt];
   const correctAnswers = Array.isArray(body.correctAnswer)
@@ -348,7 +357,6 @@ app.post("/assessments/fluency/generate", requireLogin, (req, res) => {
       ? goals.filter((g) => g.studentId === selectedStudentId && g.active)
       : [];
 
-  // Very simple dummy passage
   const passageText =
     "This is a sample reading passage generated for fluency practice. " +
     "In a real app, this text would match the student's grade level and chosen topic.";
@@ -371,7 +379,8 @@ app.post("/assessments/fluency/generate", requireLogin, (req, res) => {
     generatedItems: [],
     generalSummary: null,
     fluencyData,
-    message: null
+    message: null,
+    active: "assessments"
   });
 });
 
@@ -428,7 +437,6 @@ app.get("/reports/student", requireLogin, (req, res) => {
     const sid = parseInt(studentId, 10);
     selectedStudent = getStudentById(sid);
     if (selectedStudent && selectedStudent.teacherId === loggedInTeacherId) {
-      // Goals summary: last percent correct per goal (very simplified)
       const studentGoals = goals.filter((g) => g.studentId === sid);
       goalsSummary = studentGoals.map((g) => {
         const gAssessments = generalAssessments
@@ -466,7 +474,6 @@ app.get("/reports/student", requireLogin, (req, res) => {
         };
       });
 
-      // Fluency summary
       fluencySummary = fluencyAssessments
         .filter((f) => f.studentId === sid)
         .map((f) => ({
@@ -482,7 +489,8 @@ app.get("/reports/student", requireLogin, (req, res) => {
     students: teacherStudents,
     selectedStudent,
     goalsSummary,
-    fluencySummary
+    fluencySummary,
+    active: "reports"
   });
 });
 
@@ -495,7 +503,6 @@ app.get("/reports/class", requireLogin, (req, res) => {
   teacherStudents.forEach((s) => {
     const studentGoals = goals.filter((g) => g.studentId === s.id);
     studentGoals.forEach((g) => {
-      // latest percent correct (simplified)
       const gAssessments = generalAssessments
         .filter((a) => a.studentId === s.id)
         .flatMap((a) =>
@@ -553,7 +560,6 @@ app.get("/reports/class", requireLogin, (req, res) => {
     rows = rows.filter((r) => r.gradeLevel === grade);
   }
 
-  // Get distinct grades for filter
   const grades = [
     ...new Set(teacherStudents.map((s) => s.gradeLevel).filter(Boolean))
   ];
@@ -562,7 +568,8 @@ app.get("/reports/class", requireLogin, (req, res) => {
     rows,
     selectedArea: area || "all",
     selectedGrade: grade || "all",
-    grades
+    grades,
+    active: "reports"
   });
 });
 
@@ -571,3 +578,7 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Progress-Monitoring app listening on port ${PORT}`);
 });
+
+
+ 
+  
