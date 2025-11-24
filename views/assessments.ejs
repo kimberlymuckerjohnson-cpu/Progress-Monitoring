@@ -42,7 +42,6 @@
           No active goals found for this student. Add goals first on the Goals tab.
         </p>
       <% } else { %>
-        <!-- IMPORTANT: name="goalIds" so backend sees req.body.goalIds -->
         <select name="goalIds" multiple size="5" required>
           <% studentGoals.forEach(function(g) { %>
             <option value="<%= g.id %>">
@@ -68,7 +67,6 @@
     <h3>Step 2 – Generated Items</h3>
 
     <form method="post" action="/assessments/general/save" class="mt-2">
-      <!-- pass studentId to backend -->
       <input type="hidden" name="studentId" value="<%= selectedStudentId %>" />
 
       <div class="generated-items">
@@ -82,7 +80,6 @@
             <p><strong>Item <%= index + 1 %>:</strong> <%= item.prompt %></p>
             <p class="small text-muted">Correct answer: <%= item.correctAnswer %></p>
 
-            <!-- Hidden fields so backend knows which goal/prompt/answer this belongs to -->
             <input type="hidden" name="goalId" value="<%= item.goalId %>" />
             <input type="hidden" name="prompt" value="<%= item.prompt %>" />
             <input type="hidden" name="correctAnswer" value="<%= item.correctAnswer %>" />
@@ -124,7 +121,7 @@
       <label>Student</label><br />
       <select name="studentId" required>
         <option value="">Select a student…</option>
-        <% students.forEach(function(s) { %> 
+        <% students.forEach(function(s) { %>
           <option value="<%= s.id %>" <%= selectedStudentId === s.id ? 'selected' : '' %>>
             <%= s.firstName %> <%= s.lastName %>
           </option>
