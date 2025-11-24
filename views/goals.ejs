@@ -1,36 +1,36 @@
-<div class="flex space-between mb-2">
-  <h1>Goals</h1>
-</div>
+<h1>Goals</h1>
 
-<form method="get" action="/goals" class="mb-2 flex gap-2">
-  <div>
-    <label>Student</label><br />
-    <select name="studentId">
-      <option value="">All students</option>
-      <% students.forEach(function(s) { %>
-        <option value="<%= s.id %>" <%= selectedStudentId == s.id ? 'selected' : '' %>>
-          <%= s.firstName %> <%= s.lastName %>
-        </option>
-      <% }); %>
-    </select>
-  </div>
-  <div>
-    <label>Goal area</label><br />
-    <select name="area">
-      <option value="all" <%= selectedArea === 'all' ? 'selected' : '' %>>All</option>
-      <option value="reading" <%= selectedArea === 'reading' ? 'selected' : '' %>>Reading</option>
-      <option value="math" <%= selectedArea === 'math' ? 'selected' : '' %>>Math</option>
-      <option value="writing" <%= selectedArea === 'writing' ? 'selected' : '' %>>Writing</option>
-      <option value="behavior" <%= selectedArea === 'behavior' ? 'selected' : '' %>>Behavior</option>
-      <option value="other" <%= selectedArea === 'other' ? 'selected' : '' %>>Other</option>
-    </select>
-  </div>
-  <div style="align-self:flex-end;">
-    <button type="submit" class="btn-secondary">Apply Filters</button>
+<form method="get" action="/goals" class="mb-2">
+  <div class="flex gap-2">
+    <div>
+      <label>Student</label><br />
+      <select name="studentId">
+        <option value="">All students</option>
+        <% students.forEach(function(s) { %>
+          <option value="<%= s.id %>" <%= String(selectedStudentId) === String(s.id) ? 'selected' : '' %>>
+            <%= s.firstName %> <%= s.lastName %>
+          </option>
+        <% }); %>
+      </select>
+    </div>
+    <div>
+      <label>Area</label><br />
+      <select name="area">
+        <option value="all" <%= selectedArea === 'all' ? 'selected' : '' %>>All</option>
+        <option value="reading" <%= selectedArea === 'reading' ? 'selected' : '' %>>Reading</option>
+        <option value="math" <%= selectedArea === 'math' ? 'selected' : '' %>>Math</option>
+        <option value="writing" <%= selectedArea === 'writing' ? 'selected' : '' %>>Writing</option>
+        <option value="behavior" <%= selectedArea === 'behavior' ? 'selected' : '' %>>Behavior</option>
+        <option value="other" <%= selectedArea === 'other' ? 'selected' : '' %>>Other</option>
+      </select>
+    </div>
+    <div class="flex items-end">
+      <button type="submit" class="btn-secondary">Filter</button>
+    </div>
   </div>
 </form>
 
-<form method="post" action="/goals/add" class="mb-2">
+<form method="post" action="/goals/add" class="mb-3">
   <h3>Add Goal</h3>
   <div class="flex gap-2">
     <div style="flex:1">
@@ -38,7 +38,9 @@
       <select name="studentId" required>
         <option value="">Select student</option>
         <% students.forEach(function(s) { %>
-          <option value="<%= s.id %>"><%= s.firstName %> <%= s.lastName %></option>
+          <option value="<%= s.id %>">
+            <%= s.firstName %> <%= s.lastName %>
+          </option>
         <% }); %>
       </select>
     </div>
@@ -54,25 +56,28 @@
       </select>
     </div>
   </div>
+
   <div class="mt-1">
     <label>Description</label><br />
-    <textarea name="description" required></textarea>
+    <textarea name="description" rows="2" required></textarea>
   </div>
+
   <div class="flex gap-2 mt-1">
     <div style="flex:1">
       <label>Goal Grade Level</label><br />
-      <input type="text" name="goalGradeLevel" required />
+      <input type="text" name="goalGradeLevel" placeholder="e.g., 2nd" required />
     </div>
     <div style="flex:1">
       <label>Mastery Criteria</label><br />
-      <input type="text" name="masteryCriteria" required />
+      <input type="text" name="masteryCriteria" placeholder="e.g., 80% across 3 sessions" required />
     </div>
   </div>
+
   <button type="submit" class="btn-primary mt-1">Save Goal</button>
 </form>
 
-<% if (goals.length === 0) { %>
-  <p>No goals match your filters.</p>
+<% if (!goals || goals.length === 0) { %>
+  <p>No goals found. Add your first goal above.</p>
 <% } else { %>
   <table>
     <thead>
@@ -80,9 +85,9 @@
         <th>Student</th>
         <th>Area</th>
         <th>Description</th>
-        <th>Grade Level</th>
+        <th>Goal Grade</th>
         <th>Mastery Criteria</th>
-        <th></th>
+        <th>Actions</th>
       </tr>
     </thead>
     <tbody>
@@ -90,11 +95,13 @@
         <tr>
           <td><%= g.studentName %></td>
           <td><%= g.area %></td>
-          <td><%= g.description.length > 80 ? g.description.slice(0,77) + '...' : g.description %></td>
+          <td><%= g.description %></td>
           <td><%= g.goalGradeLevel %></td>
           <td><%= g.masteryCriteria %></td>
           <td>
-            <form method="post" action="/goals/<%= g.id %>/delete" onsubmit="return confirm('Delete this goal and its assessment history?');">
+            <form method="post"
+                  action="/goals/<%= g.id %>/delete"
+                  onsubmit="return confirm('Delete this goal and its assessment history?');">
               <button type="submit" class="btn-danger">Delete</button>
             </form>
           </td>
