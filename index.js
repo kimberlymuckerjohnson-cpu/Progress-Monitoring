@@ -1,6 +1,7 @@
 const express = require("express");
 const path = require("path");
 const layouts = require("express-ejs-layouts");
+const { pool, init } = require("./db"); // <-- new: connect to database
 
 const app = express();
 
@@ -16,16 +17,16 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
 
 /**
- * IN-MEMORY DATA (no database yet)
- * Data resets whenever the server restarts.
+ * IN-MEMORY DATA (for now: students, goals, assessments)
+ * Teacher accounts are in the database.
+ * Data here resets whenever the server restarts.
  */
-let nextTeacherId = 1;
+
 let nextStudentId = 1;
 let nextGoalId = 1;
 let nextAssessmentId = 1;
 let nextFluencyId = 1;
 
-const teachers = []; // { id, email, password }
 const students = []; // { id, teacherId, firstName, lastName, gradeLevel }
 const goals = []; // { id, studentId, area, description, goalGradeLevel, masteryCriteria, active }
 const generalAssessments = []; // { id, studentId, date, items: [{goalId, prompt, correctAnswer, score}] }
@@ -82,6 +83,7 @@ app.get("/", (req, res) => {
 
 /**
  * REGISTRATION
+ * Now uses the teachers table in PostgreSQL.
  */
 
 app.get("/register", (req, res) => {
@@ -92,7 +94,7 @@ app.get("/register", (req, res) => {
   });
 });
 
-app.post("/register", (req, res) => {
+app.post("/register", async (req, res) => {
   const { email, password, confirmPassword } = req.body;
 
   if (!email || !password || !confirmPassword) {
@@ -111,30 +113,44 @@ app.post("/register", (req, res) => {
     });
   }
 
-  const existing = teachers.find(
-    (t) => t.email.toLowerCase() === email.toLowerCase()
-  );
-  if (existing) {
-    return res.render("register", {
-      error: "An account with this email already exists.",
+  try {
+    // Check if email already exists
+    const existing = await pool.query(
+      "SELECT id FROM teachers WHERE LOWER(email) = LOWER($1)",
+      [email]
+    );
+
+    if (existing.rows.length > 0) {
+      return res.render("register", {
+        error: "An account with this email already exists.",
+        hideHeader: true,
+        active: null
+      });
+    }
+
+    // Insert new teacher
+    const result = await pool.query(
+      "INSERT INTO teachers (email, password) VALUES ($1, $2) RETURNING id",
+      [email, password] // NOTE: plain text for now; later we can add hashing
+    );
+
+    const teacherId = result.rows[0].id;
+    loggedInTeacherId = teacherId;
+
+    res.redirect("/students");
+  } catch (err) {
+    console.error("Register error:", err);
+    res.render("register", {
+      error: "Something went wrong. Please try again.",
       hideHeader: true,
       active: null
     });
   }
-
-  const teacher = {
-    id: nextTeacherId++,
-    email,
-    password // NOTE: plain text for now
-  };
-  teachers.push(teacher);
-
-  loggedInTeacherId = teacher.id;
-  res.redirect("/students");
 });
 
 /**
  * LOGIN / LOGOUT
+ * Also uses the teachers table in PostgreSQL.
  */
 
 app.get("/login", (req, res) => {
@@ -145,25 +161,43 @@ app.get("/login", (req, res) => {
   });
 });
 
-app.post("/login", (req, res) => {
+app.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
-  const teacher = teachers.find(
-    (t) =>
-      t.email.toLowerCase() === (email || "").toLowerCase() &&
-      t.password === password
-  );
+  try {
+    const result = await pool.query(
+      "SELECT id, password FROM teachers WHERE LOWER(email) = LOWER($1)",
+      [email]
+    );
 
-  if (!teacher) {
-    return res.render("login", {
-      error: "Incorrect email or password.",
+    if (result.rows.length === 0) {
+      return res.render("login", {
+        error: "Incorrect email or password.",
+        hideHeader: true,
+        active: null
+      });
+    }
+
+    const teacher = result.rows[0];
+
+    if (teacher.password !== password) {
+      return res.render("login", {
+        error: "Incorrect email or password.",
+        hideHeader: true,
+        active: null
+      });
+    }
+
+    loggedInTeacherId = teacher.id;
+    res.redirect("/students");
+  } catch (err) {
+    console.error("Login error:", err);
+    res.render("login", {
+      error: "Something went wrong. Please try again.",
       hideHeader: true,
       active: null
     });
   }
-
-  loggedInTeacherId = teacher.id;
-  res.redirect("/students");
 });
 
 app.post("/logout", (req, res) => {
@@ -173,6 +207,7 @@ app.post("/logout", (req, res) => {
 
 /**
  * STUDENTS
+ * Still in-memory for now.
  */
 
 app.get("/students", requireLogin, (req, res) => {
@@ -685,9 +720,17 @@ app.get("/reports/class", requireLogin, (req, res) => {
 
 /**
  * START SERVER
+ * Initialize database tables first.
  */
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Progress-Monitoring app listening on port ${PORT}`);
-});
 
+init()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`Progress-Monitoring app listening on port ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error("Failed to initialize database", err);
+    process.exit(1);
+  });
