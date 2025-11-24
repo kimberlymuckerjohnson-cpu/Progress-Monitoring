@@ -1,7 +1,7 @@
 const express = require("express");
 const path = require("path");
 const layouts = require("express-ejs-layouts");
-const { pool, init } = require("./db"); // <-- new: connect to database
+const { pool, init } = require("./db"); // uses db.js
 
 const app = express();
 
@@ -17,15 +17,14 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
 
 /**
- * IN-MEMORY DATA (for now: students, goals, assessments)
- * Teacher accounts are in the database.
- * Data here resets whenever the server restarts.
+ * IN-MEMORY DATA (students, goals, assessments)
+ * Teacher accounts are stored in PostgreSQL via db.js.
  */
 
 let nextStudentId = 1;
 let nextGoalId = 1;
-let nextAssessmentId = 1;
-let nextFluencyId = 1;
+let nextGeneralAssessmentId = 1;
+let nextFluencyAssessmentId = 1;
 
 const students = []; // { id, teacherId, firstName, lastName, gradeLevel }
 const goals = []; // { id, studentId, area, description, goalGradeLevel, masteryCriteria, active }
@@ -82,8 +81,7 @@ app.get("/", (req, res) => {
 });
 
 /**
- * REGISTRATION
- * Now uses the teachers table in PostgreSQL.
+ * REGISTRATION (teachers stored in PostgreSQL)
  */
 
 app.get("/register", (req, res) => {
@@ -114,7 +112,6 @@ app.post("/register", async (req, res) => {
   }
 
   try {
-    // Check if email already exists
     const existing = await pool.query(
       "SELECT id FROM teachers WHERE LOWER(email) = LOWER($1)",
       [email]
@@ -128,10 +125,9 @@ app.post("/register", async (req, res) => {
       });
     }
 
-    // Insert new teacher
     const result = await pool.query(
       "INSERT INTO teachers (email, password) VALUES ($1, $2) RETURNING id",
-      [email, password] // NOTE: plain text for now; later we can add hashing
+      [email, password] // plain text for now
     );
 
     const teacherId = result.rows[0].id;
@@ -149,8 +145,7 @@ app.post("/register", async (req, res) => {
 });
 
 /**
- * LOGIN / LOGOUT
- * Also uses the teachers table in PostgreSQL.
+ * LOGIN / LOGOUT (teachers from PostgreSQL)
  */
 
 app.get("/login", (req, res) => {
@@ -206,8 +201,7 @@ app.post("/logout", (req, res) => {
 });
 
 /**
- * STUDENTS
- * Still in-memory for now.
+ * STUDENTS (in-memory)
  */
 
 app.get("/students", requireLogin, (req, res) => {
@@ -291,7 +285,7 @@ app.post("/students/:id/delete", requireLogin, (req, res) => {
 });
 
 /**
- * GOALS
+ * GOALS (in-memory)
  */
 
 app.get("/goals", requireLogin, (req, res) => {
@@ -365,11 +359,16 @@ app.post("/goals/:id/delete", requireLogin, (req, res) => {
 app.get("/assessments", requireLogin, (req, res) => {
   const { tab, studentId } = req.query;
   const teacherStudents = getTeacherStudents(loggedInTeacherId);
-  const selectedStudentId = studentId ? parseInt(studentId, 10) : null;
+
+  // Default to first student if none selected yet
+  let selectedStudentId = studentId ? parseInt(studentId, 10) : null;
+  if (selectedStudentId == null && teacherStudents.length > 0) {
+    selectedStudentId = teacherStudents[0].id;
+  }
 
   const studentGoals =
     selectedStudentId != null
-      ? goals.filter((g) => g.studentId === selectedStudentId && g.active)
+      ? goals.filter((g) => g.studentId === selectedStudentId)
       : [];
 
   res.render("assessments", {
@@ -409,14 +408,14 @@ app.post("/assessments/general/generate", requireLogin, (req, res) => {
     goalId: g.id,
     goalArea: g.area,
     goalDescription: g.description,
-    prompt: `Sample item for goal "${g.description}"`,
+    prompt: `Sample item for goal: ${g.description}`,
     correctAnswer: "Teacher-defined correct answer",
     score: "incorrect"
   }));
 
   const studentGoals =
     selectedStudentId != null
-      ? goals.filter((g) => g.studentId === selectedStudentId && g.active)
+      ? goals.filter((g) => g.studentId === selectedStudentId)
       : [];
 
   res.render("assessments", {
@@ -465,7 +464,7 @@ app.post("/assessments/general/save", requireLogin, (req, res) => {
   }));
 
   generalAssessments.push({
-    id: nextAssessmentId++,
+    id: nextGeneralAssessmentId++,
     studentId: sid,
     date: date || new Date().toISOString().slice(0, 10),
     items
@@ -486,7 +485,7 @@ app.post("/assessments/fluency/generate", requireLogin, (req, res) => {
 
   const studentGoals =
     selectedStudentId != null
-      ? goals.filter((g) => g.studentId === selectedStudentId && g.active)
+      ? goals.filter((g) => g.studentId === selectedStudentId)
       : [];
 
   const passageText =
@@ -540,7 +539,7 @@ app.post("/assessments/fluency/save", requireLogin, (req, res) => {
   const accuracyPercent = (correct / attempted) * 100;
 
   fluencyAssessments.push({
-    id: nextFluencyId++,
+    id: nextFluencyAssessmentId++,
     studentId: sid,
     date: date || new Date().toISOString().slice(0, 10),
     totalWordsAttempted: attempted,
@@ -719,8 +718,7 @@ app.get("/reports/class", requireLogin, (req, res) => {
 });
 
 /**
- * START SERVER
- * Initialize database tables first.
+ * START SERVER – init DB tables first
  */
 const PORT = process.env.PORT || 3000;
 
