@@ -3,10 +3,14 @@
 <!-- Tabs -->
 <div class="tabs mb-2">
   <a href="/assessments?tab=general"
-     class="<%= tab === 'general' ? 'active-tab' : '' %>">General Assessment</a>
+     class="<%= tab === 'general' ? 'active-tab' : '' %>">
+    General Assessment
+  </a>
   |
   <a href="/assessments?tab=fluency"
-     class="<%= tab === 'fluency' ? 'active-tab' : '' %>">Fluency Assessment</a>
+     class="<%= tab === 'fluency' ? 'active-tab' : '' %>">
+    Fluency Assessment
+  </a>
 </div>
 
 <% if (tab === 'general') { %>
@@ -34,7 +38,9 @@
     <div class="mb-1">
       <label>Active Goals for this student</label><br />
       <% if (!studentGoals || studentGoals.length === 0) { %>
-        <p class="small">No active goals found for this student. Add goals first on the Goals tab.</p>
+        <p class="small">
+          No active goals found for this student. Add goals first on the Goals tab.
+        </p>
       <% } else { %>
         <!-- IMPORTANT: name="goalIds" so backend sees req.body.goalIds -->
         <select name="goalIds" multiple size="5" required>
@@ -44,20 +50,23 @@
             </option>
           <% }); %>
         </select>
-        <p class="small">Hold Ctrl (Windows) or Command (Mac) to select multiple goals.</p>
+        <p class="small">
+          Hold Ctrl (Windows) or Command (Mac) to select multiple goals.
+        </p>
       <% } %>
     </div>
 
-    <button type="submit" class="btn-primary" <%= !studentGoals || studentGoals.length === 0 ? 'disabled' : '' %>>
+    <button type="submit"
+            class="btn-primary"
+            <%= !studentGoals || studentGoals.length === 0 ? 'disabled' : '' %>>
       Generate Items
     </button>
   </form>
 
-  <!-- Step 2: Generated Items -->
+  <!-- Step 2 & 3: Generated Items + Save -->
   <% if (generatedItems && generatedItems.length > 0) { %>
     <h3>Step 2 – Generated Items</h3>
 
-    <!-- Step 3: Save Results -->
     <form method="post" action="/assessments/general/save" class="mt-2">
       <!-- pass studentId to backend -->
       <input type="hidden" name="studentId" value="<%= selectedStudentId %>" />
@@ -66,8 +75,7 @@
         <% generatedItems.forEach(function(item, index) { %>
           <div class="card mb-1">
             <div class="small text-muted">
-              Goal: [<%= item.goalArea %>]
-              <br />
+              Goal: [<%= item.goalArea %>] <br />
               <em><%= item.goalDescription %></em>
             </div>
 
@@ -116,7 +124,7 @@
       <label>Student</label><br />
       <select name="studentId" required>
         <option value="">Select a student…</option>
-        <% students.forEach(function(s) { %>
+        <% students.forEach(function(s) { %> 
           <option value="<%= s.id %>" <%= selectedStudentId === s.id ? 'selected' : '' %>>
             <%= s.firstName %> <%= s.lastName %>
           </option>
@@ -173,8 +181,9 @@
         WCPM and Accuracy % will be calculated automatically when you save.
       </p>
 
-      <button type="submit" class="btn-primary">Save Fluency Assessment</button>
+      <button type="submit" class="btn-primary">
+        Save Fluency Assessment
+      </button>
     </form>
   <% } %>
-
 <% } %>
